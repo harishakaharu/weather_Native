@@ -1,18 +1,21 @@
-import { appStyle } from "./styles/App.style";
-import { Alert, ImageBackground, Text } from "react-native";
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import Home from "./components/Home";
-import backgroundImg from "./assets/background.png";
-import { useEffect, useState } from "react";
-import { useFonts } from "expo-font";
-import {
-  requestForegroundPermissionsAsync,
-  getCurrentPositionAsync,
-} from "expo-location";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import * as Device from "expo-device";
+import { useFonts } from "expo-font";
+import {
+  getCurrentPositionAsync,
+  requestForegroundPermissionsAsync,
+} from "expo-location";
+import * as Notifications from "expo-notifications";
+import { useEffect, useState } from "react";
+import { Alert, ImageBackground, Platform } from "react-native";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import useHttp from "./api/weatherAPI";
+import backgroundImg from "./assets/background.png";
 import ForecastPage from "./components/ForecastPage";
+import Home from "./components/Home";
+import { appStyle } from "./styles/App.style";
+import Constants from "expo-constants";
 const Stack = createNativeStackNavigator();
 const navTheme = {
   colors: {
@@ -36,6 +39,17 @@ export default function App() {
     getUserCoords();
   }, []);
   const getUserCoords = async () => {
+    subscribeToNotification();
+
+    //App is running in background or killed when notification is triggered.
+    Notifications.addNotificationResponseReceivedListener((response) =>
+      console.log(response.notification.request.content)
+    );
+    //App is running
+    Notifications.addNotificationReceivedListener((notification) => {
+      console.log(notification);
+    });
+
     const { status } = await requestForegroundPermissionsAsync();
     if (status === "granted") {
       const userCoords = await getCurrentPositionAsync();
@@ -47,6 +61,47 @@ export default function App() {
       setUserLocation({ lat: "26.85", lng: "80.35" });
     }
   };
+
+  //###################Send Notification############################
+
+  const subscribeToNotification = async () => {
+    let token;
+    if (Platform.OS === "android") {
+      await Notifications.setNotificationChannelAsync("default", {
+        name: "default",
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: "#FF231F7C",
+      });
+    }
+    if (Device.isDevice) {
+      const { status: existingStatus } =
+        await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+      if (existingStatus !== "granted") {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+      if (finalStatus !== "granted") {
+        alert("Failed to get push token for push notification!");
+        return;
+      }
+      // Learn more about projectId:
+      // https://docs.expo.dev/push-notifications/push-notifications-setup/#configure-projectid
+      token = (
+        await Notifications.getExpoPushTokenAsync({
+          projectId: Constants.expoConfig?.extra?.eas?.projectId,
+          // "d8a92c90-31fc-45ab-a23f-55ab6e4d4a4f",
+        })
+      ).data;
+      console.log(token);
+    } else {
+      alert("Must use physical device for Push Notifications");
+    }
+
+    return token;
+  };
+
   //######################Custom hook call##########################
   useEffect(() => {
     const dataTransform = (data) => {
