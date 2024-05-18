@@ -1,5 +1,11 @@
 # Weather and Forecast App
 
+# Preview 
+![Screenshot_20240518-223948](https://github.com/harishakaharu/weather_Native/assets/92537253/f90ad7b0-7e21-4620-a39b-c695fad53061)
+![Screenshot_20240518-223952](https://github.com/harishakaharu/weather_Native/assets/92537253/b1da922d-3d29-4549-89ff-361003e10c51)
+![Screenshot_20240518-224010](https://github.com/harishakaharu/weather_Native/assets/92537253/2836d144-27d3-40ae-be79-e81ae70f7b2a)
+
+
 The Weather and Forecast App is a simple mobile application built using Expo for native development. It allows users to create, manage, and organize their tasks efficiently.
 
 ## Installation
